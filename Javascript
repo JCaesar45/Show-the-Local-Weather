@@ -1,0 +1,85 @@
+const locationElement = document.getElementById('location');
+const iconElement = document.getElementById('icon');
+const tempElement = document.getElementById('temp');
+const unitBtn = document.getElementById('unit-btn');
+const weatherContainer = document.getElementById('weather');
+
+let temperatureK = null; // Store temperature in Kelvin for conversion
+let isFahrenheit = true; // Default display
+
+// Function to set background and icon based on weather
+function updateBackgroundAndIcon(weatherMain) {
+  weatherContainer.className = ''; // Reset classes
+  switch (weatherMain.toLowerCase()) {
+    case 'clear':
+    case 'sunny':
+      weatherContainer.classList.add('sunny');
+      iconElement.innerHTML = '☀️'; // Sun emoji or icon
+      break;
+    case 'clouds':
+    case 'cloudy':
+      weatherContainer.classList.add('cloudy');
+      iconElement.innerHTML = '☁️';
+      break;
+    case 'rain':
+    case 'rainy':
+      weatherContainer.classList.add('rainy');
+      iconElement.innerHTML = '🌧️';
+      break;
+    case 'snow':
+    case 'snowy':
+      weatherContainer.classList.add('snowy');
+      iconElement.innerHTML = '❄️';
+      break;
+    default:
+      iconElement.innerHTML = '🌡️';
+  }
+}
+
+// Function to display temperature
+function displayTemperature() {
+  if (isFahrenheit) {
+    const tempF = (temperatureK * 9/5) - 459.67;
+    tempElement.textContent = `${tempF.toFixed(1)} °F`;
+    document.getElementById('unit-btn').textContent = 'Show in °C';
+  } else {
+    const tempC = temperatureK - 273.15;
+    tempElement.textContent = `${tempC.toFixed(1)} °C`;
+    document.getElementById('unit-btn').textContent = 'Show in °F';
+  }
+}
+
+// Fetch weather data using Geolocation
+function fetchWeather(lat, lon) {
+  const apiURL = `https://weather-proxy.freecodecamp.rocks/api/current?lat=${lat}&lon=${lon}`;
+  fetch(apiURL)
+    .then(res => res.json())
+    .then(data => {
+      const { name, main, weather } = data;
+      locationElement.textContent = name;
+      temperatureK = main.temp;
+      updateBackgroundAndIcon(weather[0].main);
+      displayTemperature();
+    })
+    .catch(err => {
+      alert('Error fetching weather data.');
+      console.error(err);
+    });
+}
+
+// Get user location
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(position => {
+    fetchWeather(position.coords.latitude, position.coords.longitude);
+  }, () => {
+    alert('Geolocation is not supported or permission denied.');
+  });
+} else {
+  alert('Geolocation is not supported by your browser.');
+}
+
+// Toggle temperature units
+unitBtn.addEventListener('click', () => {
+  isFahrenheit = !isFahrenheit;
+  displayTemperature();
+});
